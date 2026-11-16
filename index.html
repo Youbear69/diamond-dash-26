@@ -1,0 +1,2611 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Diamond Dash 26 💎</title>
+  
+  <style>
+    /* ============================================================
+       CUSTOM FONTS:
+       - English & Numbers: Stratum No.1
+       - Thai: Hinn (Regular & Semi-Bold)
+       ============================================================ */
+    @font-face {
+      font-family: 'Stratum';
+      src: url('./fonts/stratum-no1-2.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Hinn';
+      src: url('./fonts/hinn-regular.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    @font-face {
+      font-family: 'Hinn';
+      src: url('./fonts/hinn-semi-bold.ttf') format('truetype');
+      font-weight: 600 900;
+      font-style: normal;
+    }
+
+    :root {
+      --cell-size: 50px;
+      --board-cols: 10;
+      --board-rows: 9;
+      --font-eng: 'Stratum', system-ui, sans-serif;
+      --font-thai: 'Hinn', 'Stratum', system-ui, sans-serif;
+      --font-all: 'Stratum', 'Hinn', system-ui, sans-serif;
+      --primary-glow: #ffdd44;
+      --fire-color: #ff3344;
+      --purple-color: #b545ff;
+      --green-color: #2ed573;
+      --yellow-color: #ffa502;
+      --blue-color: #1e90ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 30%, #2b1055 0%, #15082b 60%, #080314 100%);
+      font-family: var(--font-all);
+      color: #fff;
+      touch-action: manipulation;
+    }
+
+    /* Animated background sparkles */
+    .bg-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.55;
+    }
+
+    /* Screen shake on explosion */
+    .shake {
+      animation: screenShake 0.35s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes screenShake {
+      10%, 90% { transform: translate3d(-4px, 2px, 0); }
+      20%, 80% { transform: translate3d(5px, -4px, 0); }
+      30%, 50%, 70% { transform: translate3d(-6px, 5px, 0); }
+      40%, 60% { transform: translate3d(6px, -3px, 0); }
+    }
+
+    /* Main Container */
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      padding: 4px 10px;
+    }
+
+    /* TOP BAR: Controls & Score (Strictly centered above board) */
+    #top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 880px;
+      margin-bottom: 4px;
+      padding: 0 4px;
+      z-index: 5;
+    }
+
+    .top-btn-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      background: linear-gradient(180deg, #4c2c88 0%, #24114a 100%);
+      border: 2px solid #8457c4;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1.15rem;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+      transition: transform 0.1s, background 0.2s, border-color 0.2s;
+      font-family: var(--font-all);
+    }
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+    .icon-btn.pause-btn {
+      background: linear-gradient(180deg, #6c32a8 0%, #3a1566 100%);
+      border-color: #a862ea;
+    }
+
+    /* Score Box - positioned directly above the gem box */
+    #score-box {
+      background: linear-gradient(180deg, #ffd700 0%, #ff8c00 70%, #d45d00 100%);
+      padding: 2px 24px;
+      border-radius: 20px;
+      border: 3px solid #fff;
+      box-shadow: 0 0 18px rgba(255, 215, 0, 0.65), 0 4px 10px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.85);
+      text-align: center;
+      min-width: 210px;
+      transition: transform 0.12s;
+    }
+    #score-label {
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      color: #632600;
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 1;
+      margin-top: 1px;
+      font-family: var(--font-eng);
+    }
+    #score-value {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #ffffff;
+      text-shadow: 0 2px 4px #7a2d00, 0 -1px 0 #5c1800;
+      line-height: 1.1;
+      letter-spacing: 1.5px;
+      font-family: var(--font-eng);
+    }
+    .score-pulse {
+      animation: scorePulse 0.18s ease-out;
+    }
+    @keyframes scorePulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.18); color: #fffeb0; }
+      100% { transform: scale(1); }
+    }
+
+    /* Mode / Level Badge chip */
+    #mode-chip {
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      color: #f7d544;
+      text-align: right;
+      font-family: var(--font-eng);
+      min-width: 75px;
+    }
+    #mode-chip span {
+      display: block;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    /* ============================================================
+       MIDDLE SECTION: DEAD-CENTERED BOARD + FLOATING COMBO
+       ============================================================ */
+    #middle-section {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+
+    /* Gem Board Wrapper - DEAD CENTER OF SCREEN */
+    #board-wrapper {
+      position: relative;
+      padding: 6px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #3f227a 0%, #200f45 100%);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.65), inset 0 2px 4px rgba(255,255,255,0.22), 0 0 0 3px #6236b0;
+      transition: box-shadow 0.3s, border-color 0.3s, filter 0.3s;
+      margin: 0 auto;
+    }
+
+    /* Skill Active Glow on Board */
+    #board-wrapper.skill-active {
+      box-shadow: 0 0 35px #ff3300, 0 0 70px #ff8800, inset 0 0 25px #ff5500, 0 0 0 4px #ffbb00;
+      animation: skillBorderPulse 0.6s infinite alternate;
+    }
+    @keyframes skillBorderPulse {
+      from { filter: drop-shadow(0 0 10px #ff4400); }
+      to { filter: drop-shadow(0 0 25px #ffaa00); }
+    }
+
+    #board-grid {
+      display: grid;
+      grid-template-columns: repeat(var(--board-cols), var(--cell-size));
+      grid-template-rows: repeat(var(--board-rows), var(--cell-size));
+      gap: 2px;
+      background: rgba(14, 6, 32, 0.92);
+      padding: 4px;
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    /* Cell socket */
+    .cell-socket {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      background: rgba(255,255,255,0.035);
+      border-radius: 8px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+      position: relative;
+      pointer-events: none;
+    }
+
+    /* Gem Element inside socket */
+    .gem {
+      position: absolute;
+      width: calc(var(--cell-size) - 2px);
+      height: calc(var(--cell-size) - 2px);
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      cursor: pointer;
+      z-index: 2;
+      transition: transform 0.12s cubic-bezier(0.34, 1.3, 0.64, 1);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+      will-change: transform, opacity, top, left;
+    }
+    .gem:active {
+      transform: scale(0.9);
+    }
+    .gem.popping {
+      animation: gemPop 0.18s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes gemPop {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35) rotate(5deg); opacity: 0.9; }
+      100% { transform: scale(0.1); opacity: 0; }
+    }
+
+    /* Drop / Fall Animation */
+    .gem.falling {
+      transition: top 0.22s cubic-bezier(0.25, 0.9, 0.45, 1.25);
+    }
+
+    /* Invalid click shake */
+    .gem.invalid-shake {
+      animation: gemWobble 0.25s ease-in-out;
+    }
+    @keyframes gemWobble {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px) rotate(-6deg); }
+      75% { transform: translateX(4px) rotate(6deg); }
+    }
+
+    /* Hint Glow Animation (when idle >= 2.2s) */
+    .gem.hint-active {
+      animation: gemHintPulse 0.75s infinite alternate ease-in-out;
+      z-index: 5;
+    }
+    @keyframes gemHintPulse {
+      0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 4px #ffd700) brightness(1.1);
+      }
+      100% {
+        transform: scale(1.15) rotate(4deg);
+        filter: drop-shadow(0 0 16px #ffffff) drop-shadow(0 0 24px #ffd700) brightness(1.4);
+      }
+    }
+
+    /* ============================================================
+       FLOATING COMBO (NO BACKGROUND BOX - SCALES WITH COMBO COUNT)
+       ============================================================ */
+    #combo-panel {
+      position: absolute;
+      left: calc(100% + 20px);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      pointer-events: none;
+      z-index: 20;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    /* Dynamic size: grows larger as combo increases */
+    #combo-num {
+      font-size: 3.6rem;
+      line-height: 0.85;
+      font-weight: 900;
+      color: #ffffff;
+      background: linear-gradient(180deg, #ffffff 0%, #ffdf58 60%, #ff8c00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8)) drop-shadow(0 0 16px rgba(255, 165, 0, 0.7));
+      transition: font-size 0.15s ease-out, transform 0.12s;
+      font-family: var(--font-eng);
+    }
+    .combo-bounce {
+      animation: comboBounce 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes comboBounce {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3) rotate(-5deg); }
+      100% { transform: scale(1); }
+    }
+
+    #combo-text {
+      font-size: 1.6rem;
+      font-weight: 900;
+      font-style: italic;
+      color: #ffd214;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.85), 0 0 16px rgba(255, 215, 0, 0.9);
+      margin-top: 4px;
+      line-height: 1;
+      font-family: var(--font-eng);
+    }
+
+    /* Skill / Bomb Mode Banner */
+    #skill-badge {
+      display: none;
+      margin-top: 10px;
+      background: linear-gradient(180deg, #ff3838 0%, #a812b8 100%);
+      border: 2px solid #fff;
+      border-radius: 12px;
+      padding: 4px 8px;
+      box-shadow: 0 0 18px rgba(255, 56, 56, 0.85);
+      animation: skillPulse 0.5s infinite alternate;
+      min-width: 120px;
+    }
+    @keyframes skillPulse {
+      from { transform: scale(0.95); box-shadow: 0 0 8px #ff3838; }
+      to { transform: scale(1.05); box-shadow: 0 0 22px #ffeb3b; }
+    }
+    #skill-badge.active {
+      display: block;
+    }
+    #skill-badge-title {
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 1px 3px #000;
+      letter-spacing: 1px;
+      font-family: var(--font-eng);
+    }
+    #skill-timer-bar {
+      width: 100%;
+      height: 5px;
+      background: rgba(0,0,0,0.4);
+      border-radius: 3px;
+      margin-top: 3px;
+      overflow: hidden;
+    }
+    #skill-timer-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff0055, #ffea00);
+      transition: width 0.05s linear;
+    }
+    #skill-time-num {
+      font-size: 0.75rem;
+      color: #ffe600;
+      margin-top: 2px;
+      font-weight: 800;
+      font-family: var(--font-eng);
+    }
+
+    /* BOTTOM BAR: 60s Timer or Zen Quest Progress Bar */
+    #bottom-section {
+      width: 100%;
+      max-width: 880px;
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #timer-bar-container {
+      width: calc(var(--board-cols) * var(--cell-size) + 20px);
+      max-width: 100%;
+      height: 22px;
+      background: rgba(14, 6, 32, 0.85);
+      border: 2px solid #7142c7;
+      border-radius: 12px;
+      padding: 2px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 2px 4px rgba(0,0,0,0.6);
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    #timer-bar-fill {
+      height: 100%;
+      width: 100%;
+      border-radius: 9px;
+      background: linear-gradient(90deg, #00c853 0%, #aeea00 60%, #ffd600 100%);
+      box-shadow: 0 0 12px rgba(0, 200, 83, 0.65);
+      transition: width 0.1s linear, background 0.4s;
+    }
+    #timer-bar-fill.warning {
+      background: linear-gradient(90deg, #ff9100 0%, #ff5252 100%);
+      box-shadow: 0 0 18px rgba(255, 82, 82, 0.85);
+      animation: timerBarAlert 0.4s infinite alternate;
+    }
+    @keyframes timerBarAlert {
+      from { filter: brightness(1); }
+      to { filter: brightness(1.35); }
+    }
+
+    #timer-label {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 900;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.8);
+      pointer-events: none;
+      letter-spacing: 1px;
+      font-family: var(--font-all);
+    }
+
+    /* SPARKLE EFFECT */
+    .got-sparkle {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      background-image: url('./element/got_spritesheet.png');
+      background-size: 1600% 100%;
+      background-repeat: no-repeat;
+      pointer-events: none;
+      z-index: 10;
+      transform: translate(-50%, -50%);
+      animation: playGot 0.27s steps(15) forwards;
+      filter: drop-shadow(0 0 8px #ffffff);
+    }
+    @keyframes playGot {
+      from { background-position: 0% 0%; }
+      to { background-position: 100% 0%; }
+    }
+
+    /* BOMB BLAST SHOCKWAVE EFFECT */
+    .bomb-shockwave {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 12;
+      transform: translate(-50%, -50%);
+      border: 4px solid #fff;
+      box-shadow: 0 0 30px #ff3300, inset 0 0 20px #ffbb00;
+      animation: blastExpand 0.35s ease-out forwards;
+    }
+    @keyframes blastExpand {
+      0% { width: 10px; height: 10px; opacity: 1; border-width: 8px; background: rgba(255, 255, 200, 0.9); }
+      50% { background: rgba(255, 68, 0, 0.45); }
+      100% { width: var(--blast-size); height: var(--blast-size); opacity: 0; border-width: 2px; }
+    }
+
+    /* FLOATING SCORE POPUP */
+    .floating-score {
+      position: absolute;
+      pointer-events: none;
+      z-index: 15;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #fffb8f;
+      text-shadow: 0 2px 4px #000, 0 0 10px #ffaa00;
+      transform: translate(-50%, -50%);
+      animation: floatUpFade 0.7s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+      font-family: var(--font-eng);
+    }
+    @keyframes floatUpFade {
+      0% { transform: translate(-50%, -20%) scale(0.7); opacity: 0; }
+      20% { transform: translate(-50%, -60%) scale(1.2); opacity: 1; }
+      100% { transform: translate(-50%, -150%) scale(1); opacity: 0; }
+    }
+
+    /* 3-SECOND PREPARATION COUNTDOWN OVERLAY */
+    #countdown-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(8, 3, 20, 0.5);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 60;
+      pointer-events: none;
+    }
+    #countdown-overlay.active {
+      display: flex;
+    }
+    #countdown-text {
+      font-size: 8.5rem;
+      font-weight: 900;
+      color: #ffd700;
+      text-shadow: 0 0 30px #ff9900, 0 4px 10px #000;
+      animation: countPulse 0.9s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+      letter-spacing: 3px;
+      font-family: var(--font-eng);
+    }
+    @keyframes countPulse {
+      0% { transform: scale(0.3); opacity: 0; }
+      40% { transform: scale(1.3); opacity: 1; }
+      75% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.1); opacity: 0; }
+    }
+
+    /* 2-SECOND TIME'S UP HOLD BANNER */
+    #hold-banner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: linear-gradient(180deg, #ff1744 0%, #b71c1c 100%);
+      border: 4px solid #fff;
+      padding: 18px 48px;
+      border-radius: 28px;
+      box-shadow: 0 0 50px rgba(255, 23, 68, 0.9), 0 10px 30px rgba(0,0,0,0.8);
+      z-index: 55;
+      display: none;
+      pointer-events: none;
+      animation: holdBannerPulse 0.4s ease-out forwards;
+    }
+    @keyframes holdBannerPulse {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      60% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    #hold-banner-text {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 4px 10px rgba(0,0,0,0.7);
+      letter-spacing: 3px;
+      font-family: var(--font-eng);
+    }
+
+    /* ZEN LEVEL UP BANNER */
+    #zen-levelup-banner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: linear-gradient(180deg, #00e676 0%, #009624 100%);
+      border: 4px solid #fff;
+      padding: 16px 36px;
+      border-radius: 24px;
+      box-shadow: 0 0 40px rgba(0, 230, 118, 0.9), 0 8px 24px rgba(0,0,0,0.7);
+      z-index: 55;
+      display: none;
+      pointer-events: none;
+      text-align: center;
+      animation: holdBannerPulse 0.4s ease-out forwards;
+    }
+    #zen-levelup-banner h2 {
+      font-size: 2.4rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 3px 6px rgba(0,0,0,0.6);
+      font-family: var(--font-eng);
+    }
+    #zen-levelup-banner p {
+      font-size: 1.15rem;
+      color: #e8f5e9;
+      font-family: var(--font-thai);
+      margin-top: 4px;
+    }
+
+    /* MODAL OVERLAYS (Home, Mode Select, Settings, How to Play, Pause, Game Over) */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 4, 25, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease-out;
+      padding: 16px;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: linear-gradient(180deg, #4b238c 0%, #210f44 100%);
+      border: 3px solid #ffd700;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.8), 0 0 30px rgba(255, 215, 0, 0.4);
+      border-radius: 24px;
+      padding: 24px 32px;
+      text-align: center;
+      max-width: 480px;
+      width: 95%;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: scale(0.85);
+      transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1);
+    }
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-title {
+      font-size: 2.3rem;
+      font-weight: 900;
+      color: #ffde59;
+      text-shadow: 0 3px 6px rgba(0,0,0,0.6);
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+      font-family: var(--font-eng);
+    }
+    .modal-subtitle {
+      font-size: 1.05rem;
+      color: #d1bfff;
+      margin-bottom: 18px;
+      line-height: 1.5;
+      font-family: var(--font-thai);
+    }
+
+    .btn-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      margin-top: 14px;
+    }
+
+    .cta-btn {
+      background: linear-gradient(180deg, #00e676 0%, #00a844 100%);
+      border: 3px solid #ffffff;
+      border-radius: 20px;
+      color: #ffffff;
+      font-size: 1.35rem;
+      font-weight: 900;
+      padding: 12px 28px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0, 230, 118, 0.5), inset 0 2px 0 rgba(255,255,255,0.7);
+      transition: transform 0.1s, box-shadow 0.2s;
+      font-family: var(--font-thai);
+      letter-spacing: 0.5px;
+    }
+    .cta-btn:active {
+      transform: scale(0.94);
+    }
+
+    .sub-btn {
+      background: linear-gradient(180deg, #442a78 0%, #241248 100%);
+      border: 2px solid #7d52b9;
+      border-radius: 18px;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 10px 22px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      transition: transform 0.1s, background 0.2s;
+      font-family: var(--font-thai);
+    }
+    .sub-btn:active {
+      transform: scale(0.95);
+    }
+    .sub-btn.danger {
+      background: linear-gradient(180deg, #e53935 0%, #b71c1c 100%);
+      border-color: #ff7961;
+    }
+
+    /* Mode Selection Cards */
+    .mode-card {
+      background: rgba(255,255,255,0.08);
+      border: 2px solid #8457c4;
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.2s, background 0.2s;
+    }
+    .mode-card:hover {
+      background: rgba(255,255,255,0.14);
+      border-color: #ffd700;
+      transform: translateY(-2px);
+    }
+    .mode-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .mode-card-title {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #ffd700;
+      font-family: var(--font-thai);
+    }
+    .mode-card-desc {
+      font-size: 0.95rem;
+      color: #ddd1ff;
+      line-height: 1.4;
+      font-family: var(--font-thai);
+    }
+    .mode-card-tag {
+      background: #7d52b9;
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-family: var(--font-eng);
+    }
+
+    /* Settings option rows */
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.07);
+      padding: 10px 16px;
+      border-radius: 14px;
+      margin-bottom: 10px;
+      font-family: var(--font-thai);
+    }
+    .setting-label {
+      font-size: 1.1rem;
+      color: #fff;
+      font-weight: 800;
+    }
+    .setting-control select, .setting-control button {
+      background: #391c6e;
+      border: 2px solid #8457c4;
+      color: #ffd700;
+      font-size: 1rem;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: var(--font-thai);
+      outline: none;
+    }
+
+    /* How to Play Content */
+    .how-to-box {
+      text-align: left;
+      background: rgba(0,0,0,0.3);
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #e0d4ff;
+      font-family: var(--font-thai);
+      margin-bottom: 16px;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+    .how-to-box h3 {
+      color: #ffd700;
+      font-size: 1.15rem;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+    .how-to-box h3:first-child {
+      margin-top: 0;
+    }
+
+    /* Stats display */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.08);
+      margin: 6px 0;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-family: var(--font-thai);
+    }
+    .stat-label {
+      font-size: 1rem;
+      color: #dcd1ff;
+    }
+    .stat-val {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #ffd700;
+      font-family: var(--font-eng);
+    }
+
+    /* Portrait adjustments */
+    body.portrait-mode #combo-panel {
+      position: static;
+      transform: none;
+      flex-direction: row;
+      justify-content: space-around;
+      width: calc(var(--board-cols) * var(--cell-size) + 16px);
+      margin-top: 4px;
+    }
+    body.portrait-mode #combo-num {
+      font-size: 2.8rem !important;
+    }
+    body.portrait-mode #combo-text {
+      font-size: 1.2rem;
+      margin-top: 0;
+    }
+    body.portrait-mode #skill-badge {
+      margin-top: 0;
+    }
+
+    /* Responsive heights */
+    @media (max-height: 520px) {
+      :root {
+        --cell-size: 36px;
+      }
+      #score-box {
+        padding: 1px 16px;
+        min-width: 170px;
+      }
+      #score-value {
+        font-size: 1.35rem;
+      }
+      #combo-num {
+        font-size: 2.8rem;
+      }
+      #combo-text {
+        font-size: 1.15rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Particles -->
+  <canvas id="bg-canvas" class="bg-canvas"></canvas>
+
+  <!-- Main Game Container -->
+  <div id="game-container">
+
+    <!-- Top Bar: Home, Pause, Sound, Fullscreen, Score, Mode Badge -->
+    <div id="top-bar">
+      <div class="top-btn-group">
+        <button id="btn-home" class="icon-btn" title="กลับหน้าแรก">🏠</button>
+        <button id="btn-pause" class="icon-btn pause-btn" title="พักเกม">⏸</button>
+        <button id="btn-sound" class="icon-btn" title="เปิด/ปิดเสียง">🔊</button>
+        <button id="btn-fullscreen" class="icon-btn" title="เต็มจอ">⛶</button>
+      </div>
+
+      <!-- Score Box (Centered above board) -->
+      <div id="score-box">
+        <div id="score-label">SCORE</div>
+        <div id="score-value">0</div>
+      </div>
+
+      <!-- Mode or Level indicator -->
+      <div id="mode-chip">
+        <span id="mode-chip-title">CLASSIC</span>
+        <span id="mode-chip-sub">BEST: <b id="best-score-val">0</b></span>
+      </div>
+    </div>
+
+    <!-- Middle Section: Centered Board + Floating Combo on right -->
+    <div id="middle-section">
+      <!-- Gem Board Wrapper (DEAD CENTER) -->
+      <div id="board-wrapper">
+        <div id="board-grid"></div>
+      </div>
+
+      <!-- Floating Combo Panel (No background box! Number scales dynamically) -->
+      <div id="combo-panel">
+        <div>
+          <div id="combo-num">0</div>
+          <div id="combo-text">combo!</div>
+        </div>
+
+        <!-- Special Skill Mode (Active when combo >= 12) -->
+        <div id="skill-badge">
+          <div id="skill-badge-title">💥 BOMB MODE!</div>
+          <div id="skill-timer-bar">
+            <div id="skill-timer-fill"></div>
+          </div>
+          <div id="skill-time-num">3.0s</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Section: 60s Timer Bar or Zen Quest Progress Bar -->
+    <div id="bottom-section">
+      <div id="timer-bar-container">
+        <div id="timer-bar-fill"></div>
+        <div id="timer-label">⏱ 60s</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 3-Second Countdown Overlay -->
+  <div id="countdown-overlay">
+    <div id="countdown-text">3</div>
+  </div>
+
+  <!-- 2-Second Hold Banner (Time's Up) -->
+  <div id="hold-banner">
+    <div id="hold-banner-text">⏰ TIME'S UP!</div>
+  </div>
+
+  <!-- Zen Level Up Banner -->
+  <div id="zen-levelup-banner">
+    <h2 id="zen-levelup-title">🎉 LEVEL UP!</h2>
+    <p id="zen-levelup-desc">กระดานขยายขนาดใหญ่ขึ้น!</p>
+  </div>
+
+  <!-- ============================================================
+       MODALS: HOME, MODE SELECT, SETTINGS, HOW TO PLAY, PAUSE, GAME OVER
+       ============================================================ -->
+
+  <!-- 1. Home / Main Menu Overlay -->
+  <div id="home-overlay" class="modal-overlay active">
+    <div class="modal-card">
+      <h1 class="modal-title">💎 DIAMOND DASH 26</h1>
+      <p class="modal-subtitle">สุดยอดเกมกดเพชรคอมโบระเบิดสุดมันส์!</p>
+
+      <div class="btn-col">
+        <button id="btn-menu-play" class="cta-btn">▶ เล่นเกม (Play)</button>
+        <button id="btn-menu-settings" class="sub-btn">⚙️ ตั้งค่า (Settings)</button>
+        <button id="btn-menu-howto" class="sub-btn">📖 วิธีการเล่น (How to Play)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Mode Select Modal (Classic vs Zen) -->
+  <div id="mode-overlay" class="modal-overlay">
+    <div class="modal-card">
+      <h1 class="modal-title">🎮 SELECT MODE</h1>
+      <p class="modal-subtitle">เลือกโหมดเกมที่ต้องการเล่น</p>
+
+      <!-- Classic Mode Card -->
+      <div id="card-mode-classic" class="mode-card">
+        <div class="mode-card-header">
+          <span class="mode-card-title">⚡ โหมดคลาสสิก (Classic)</span>
+          <span class="mode-card-tag">60 SEC</span>
+        </div>
+        <p class="mode-card-desc">
+          แข่งทำคะแนนสูงสุดใน 60 วินาที! ทำคอมโบติดกัน 12 ครั้งเพื่อเปิดสกิลระเบิด ยิ่งคอมโบนาน ยิ่งได้เวลาโบนัส!
+        </p>
+      </div>
+
+      <!-- Zen Mode Card -->
+      <div id="card-mode-zen" class="mode-card">
+        <div class="mode-card-header">
+          <span class="mode-card-title">🌸 โหมดเซน (Zen Mode)</span>
+          <span class="mode-card-tag">NO LIMIT</span>
+        </div>
+        <p class="mode-card-desc">
+          เล่นชิล ๆ ไม่มีเวลาจำกัด! เก็บเควสทำลายบล็อคสะสมเพื่ออัปเลเวล กระดานจะค่อย ๆ ขยายจาก 6x7 จนถึง 20x20 บันทึกเซฟอัตโนมัติ!
+        </p>
+        <div id="zen-save-info" style="display:none; margin-top:8px; font-size:0.85rem; color:#ffd700;">
+          💾 ความคืบหน้า: <span id="zen-save-text">เลเวล 1</span>
+        </div>
+      </div>
+
+      <div class="btn-col">
+        <button id="btn-mode-back" class="sub-btn">⬅ ย้อนกลับหน้าแรก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Settings Modal -->
+  <div id="settings-overlay" class="modal-overlay">
+    <div class="modal-card">
+      <h1 class="modal-title">⚙️ SETTINGS</h1>
+      <p class="modal-subtitle">ตั้งค่าเกม</p>
+
+      <div class="setting-item">
+        <span class="setting-label">🔊 เสียงเกม (Sound FX)</span>
+        <div class="setting-control">
+          <button id="setting-sound-btn">เปิด (ON)</button>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <span class="setting-label">📐 แนวตาราง (Orientation)</span>
+        <div class="setting-control">
+          <select id="setting-orientation-select">
+            <option value="auto">🔄 อัตโนมัติ (ตามหน้าจอ)</option>
+            <option value="landscape">🖥️ แนวนอน (10x9)</option>
+            <option value="portrait">📱 แนวตั้ง (7x8)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="setting-item" id="zen-reset-box" style="display:none;">
+        <span class="setting-label">🌸 รีเซ็ตโหมดเซน</span>
+        <div class="setting-control">
+          <button id="btn-reset-zen" style="background:#b71c1c; border-color:#ff5252;">ล้างเซฟเซน</button>
+        </div>
+      </div>
+
+      <div class="btn-col">
+        <button id="btn-settings-close" class="cta-btn">ตกลง (Close)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. How to Play Modal -->
+  <div id="howto-overlay" class="modal-overlay">
+    <div class="modal-card">
+      <h1 class="modal-title">📖 วิธีการเล่น</h1>
+      
+      <div class="how-to-box">
+        <h3>💎 กฎพื้นฐาน</h3>
+        <p>• แตะ/คลิกกลุ่มเพชรสีเดียวกันที่ติดกันตั้งแต่ <b>3 ตัวขึ้นไป</b> เพื่อทำลาย</p>
+        <p>• เพชรข้างบนจะตกลงมาเติมช่องว่างตามแรงโน้มถ่วง</p>
+        <p>• หากไม่กดเกิน <b>2.2 วินาที</b> จะมีประกายดาวส่องบอกใบ้จุดที่กดได้!</p>
+
+        <h3>⚡ โหมดคลาสสิก (Classic 60s)</h3>
+        <p>• เก็บคะแนนให้ได้มากที่สุดภายใน 60 วินาที</p>
+        <p>• ทุกครั้งที่กดเพชรสำเร็จ คอมโบจะ +1 (ถ้าไม่กดเกิน 1.5 วิ คอมโบจะหลุด)</p>
+        <p>• สะสมคอมโบครบ <b>12 ครั้ง</b> จะได้รับ <b>สกิลระเบิด (Bomb Mode)</b> 3 วินาที!</p>
+        <p>• ขณะสกิลทำงาน กดตรงไหนก็ระเบิดเป็นวง โดยรัศมีจะขยายใหญ่ตามความยาวบล็อกที่กด และคอมโบต่อไปจะเพิ่มเวลาสกิล +0.3 วิ!</p>
+
+        <h3>🌸 โหมดเซน (Zen Mode)</h3>
+        <p>• เล่นสบาย ๆ <b>ไม่มีการจำกัดเวลา</b> ไม่มีความกดดัน</p>
+        <p>• เริ่มต้นจากตารางขนาดเล็ก <b>6x7</b> ช่อง</p>
+        <p>• มีเควสสะสมจำนวนบล็อคที่ทำลายเพื่ออัปเลเวล เช่น เวลแรก 1,000 บล็อค</p>
+        <p>• เมื่อเลเวลอัป กระดานจะค่อย ๆ ขยายใหญ่ขึ้นเรื่อย ๆ จนถึงขนาด <b>20x20 ช่อง</b>!</p>
+        <p>• ออกเกมได้ตลอดเวลา ตัวเกมจะบันทึกเลเวลและบล็อคที่สะสมไว้ให้เล่นต่อได้</p>
+      </div>
+
+      <div class="btn-col">
+        <button id="btn-howto-back" class="cta-btn">⬅ ย้อนกลับหน้าแรก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Pause Modal -->
+  <div id="pause-overlay" class="modal-overlay">
+    <div class="modal-card">
+      <h1 class="modal-title">⏸ PAUSED</h1>
+      <p class="modal-subtitle">เกมหยุดชั่วคราว</p>
+
+      <div class="stat-row">
+        <span class="stat-label">โหมด:</span>
+        <span id="pause-game-mode" class="stat-val">CLASSIC</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">คะแนนปัจจุบัน:</span>
+        <span id="pause-score-val" class="stat-val">0</span>
+      </div>
+
+      <div class="btn-col">
+        <button id="btn-resume" class="cta-btn">▶ เล่นต่อ (Resume)</button>
+        <button id="btn-pause-restart" class="sub-btn">🔄 รีเซ็ตเกม (Reset)</button>
+        <button id="btn-pause-settings" class="sub-btn">⚙️ ตั้งค่า (Settings)</button>
+        <button id="btn-pause-exit" class="sub-btn danger">🏠 ออกไปหน้าแรก (Exit)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Game Over Modal (Classic Mode Result) -->
+  <div id="gameover-overlay" class="modal-overlay">
+    <div class="modal-card">
+      <h1 class="modal-title">🏆 FINAL RESULT</h1>
+      <p class="modal-subtitle">สรุปคะแนนหลังหมดเวลา 60 วินาที!</p>
+
+      <div class="stat-row">
+        <span class="stat-label">คะแนนรอบนี้:</span>
+        <span id="final-score" class="stat-val">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">คอมโบสูงสุด:</span>
+        <span id="final-max-combo" class="stat-val">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">เพชรที่กดทั้งหมด:</span>
+        <span id="final-gems-cleared" class="stat-val">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">คะแนนสูงสุด (Best):</span>
+        <span id="final-best-score" class="stat-val">0</span>
+      </div>
+
+      <div class="btn-col">
+        <button id="btn-replay" class="cta-btn">เล่นใหม่อีกครั้ง 🔄</button>
+        <button id="btn-result-settings" class="sub-btn">⚙️ ตั้งค่า (Settings)</button>
+        <button id="btn-result-home" class="sub-btn">🏠 กลับหน้าแรก (Home)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ============================================================
+       CONFIGURATION & CONSTANTS
+       ============================================================ */
+    const GAME_DURATION = 60; // 60 seconds (Classic)
+    const COMBO_TIMEOUT = 1.5; // Reset combo if next click > 1.5s
+    const SKILL_COMBO_TRIGGER = 12; // Special skill triggers at combo 12
+    const SKILL_BASE_TIME = 3.0; // 3 seconds base
+    const SKILL_EXTEND_TIME = 0.3; // +0.3 seconds per combo during skill
+    const HINT_IDLE_SECONDS = 2.2; // Show hint if idle > 2.2 seconds
+    const HOLD_AFTER_FINISH_MS = 2000; // Hold screen for 2s after 60s ends
+
+    // Grid sizes for Classic
+    const CLASSIC_LANDSCAPE_COLS = 10;
+    const CLASSIC_LANDSCAPE_ROWS = 9;
+    const CLASSIC_PORTRAIT_COLS = 7;
+    const CLASSIC_PORTRAIT_ROWS = 8;
+
+    // ZEN LEVEL PROGRESSION (From 6x7 growing to 20x20 max!)
+    const ZEN_LEVELS = [
+      { level: 1,  cols: 6,  rows: 7,  target: 1000 },
+      { level: 2,  cols: 7,  rows: 8,  target: 2200 },
+      { level: 3,  cols: 8,  rows: 9,  target: 3600 },
+      { level: 4,  cols: 9,  rows: 10, target: 5200 },
+      { level: 5,  cols: 10, rows: 11, target: 7000 },
+      { level: 6,  cols: 11, rows: 12, target: 9000 },
+      { level: 7,  cols: 12, rows: 13, target: 11200 },
+      { level: 8,  cols: 13, rows: 14, target: 13600 },
+      { level: 9,  cols: 14, rows: 15, target: 16200 },
+      { level: 10, cols: 15, rows: 16, target: 19000 },
+      { level: 11, cols: 16, rows: 17, target: 22000 },
+      { level: 12, cols: 17, rows: 18, target: 25200 },
+      { level: 13, cols: 18, rows: 19, target: 28600 },
+      { level: 14, cols: 19, rows: 20, target: 32200 },
+      { level: 15, cols: 20, rows: 20, target: 36000 }
+    ];
+
+    // 5 Gem Assets
+    const GEMS = [
+      { id: 0, name: 'fire',    src: './Gems/fire.png',    color: '#ff3b30' },
+      { id: 1, name: 'moon',    src: './Gems/moon.png',    color: '#af52de' },
+      { id: 2, name: 'plant',   src: './Gems/plant.png',   color: '#34c759' },
+      { id: 3, name: 'thunder', src: './Gems/thunder.png', color: '#ffcc00' },
+      { id: 4, name: 'water',   src: './Gems/water.png',   color: '#007aff' }
+    ];
+
+    /* ============================================================
+       AUDIO MANAGER: SFX Files + Synthesizer (Lower Volume)
+       ============================================================ */
+    class SoundManager {
+      constructor() {
+        this.enabled = true;
+        this.ctx = null;
+        this.masterGain = null;
+
+        this.sfxLostCombo = new Audio('./sfx/lost combo.wav');
+        this.sfxResult = new Audio('./sfx/Result.wav');
+        this.sfx10Sec = new Audio('./sfx/10 sec sfx.mp3');
+
+        this.sfxLostCombo.volume = 0.35;
+        this.sfxResult.volume = 0.35;
+        this.sfx10Sec.volume = 0.30;
+
+        this.sfxLostCombo.preload = 'auto';
+        this.sfxResult.preload = 'auto';
+        this.sfx10Sec.preload = 'auto';
+
+        this.played10Sec = false;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            this.ctx = new AudioCtx();
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+            this.masterGain.connect(this.ctx.destination);
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playLostCombo() {
+        if (!this.enabled) return;
+        this.sfxLostCombo.currentTime = 0;
+        this.sfxLostCombo.play().catch(() => {});
+      }
+
+      playResult() {
+        if (!this.enabled) return;
+        this.sfxResult.currentTime = 0;
+        this.sfxResult.play().catch(() => {});
+      }
+
+      play10SecWarning() {
+        if (!this.enabled || this.played10Sec) return;
+        this.played10Sec = true;
+        this.sfx10Sec.currentTime = 0;
+        this.sfx10Sec.play().catch(() => {});
+      }
+
+      playPop(comboCount) {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        const baseFreq = 280;
+        const pitchStep = Math.min(comboCount, 25) * 22;
+        const startFreq = baseFreq + pitchStep;
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(startFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(startFreq * 1.8, now + 0.08);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain || this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.12);
+      }
+
+      playInvalid() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.linearRampToValueAtTime(100, now + 0.1);
+
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain || this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.1);
+      }
+
+      playBombBlast() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(35, now + 0.35);
+
+        gain.gain.setValueAtTime(0.45, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain || this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.38);
+
+        const bufferSize = this.ctx.sampleRate * 0.25;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const noiseFilter = this.ctx.createBiquadFilter();
+        noiseFilter.type = 'lowpass';
+        noiseFilter.frequency.setValueAtTime(1200, now);
+        noiseFilter.frequency.linearRampToValueAtTime(200, now + 0.25);
+
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.3, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(this.masterGain || this.ctx.destination);
+
+        noise.start(now);
+        noise.stop(now + 0.25);
+      }
+
+      playSkillFanfare() {
+        if (!this.enabled || !this.ctx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const now = this.ctx.currentTime + idx * 0.07;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq, now);
+
+          gain.gain.setValueAtTime(0.16, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+          osc.connect(gain);
+          gain.connect(this.masterGain || this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.16);
+        });
+      }
+
+      playLevelUp() {
+        if (!this.enabled || !this.ctx) return;
+        const notes = [440, 554.37, 659.25, 880, 1108.73];
+        notes.forEach((freq, idx) => {
+          const now = this.ctx.currentTime + idx * 0.09;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+          osc.connect(gain);
+          gain.connect(this.masterGain || this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.22);
+        });
+      }
+
+      playBeep(isHigh = false) {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isHigh ? 880 : 440, now);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + (isHigh ? 0.25 : 0.15));
+
+        osc.connect(gain);
+        gain.connect(this.masterGain || this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + (isHigh ? 0.25 : 0.15));
+      }
+    }
+
+    const sound = new SoundManager();
+
+    /* ============================================================
+       GAME STATE
+       ============================================================ */
+    let currentMode = 'classic'; // 'classic' or 'zen'
+    let orientationSetting = 'auto'; // 'auto', 'landscape', 'portrait'
+
+    let COLS = CLASSIC_LANDSCAPE_COLS;
+    let ROWS = CLASSIC_LANDSCAPE_ROWS;
+    let isPortrait = false;
+
+    let board = [];
+    let score = 0;
+    let combo = 0;
+    let skillComboCounter = 0;
+    let maxCombo = 0;
+    let totalGemsCleared = 0;
+    let bestScore = parseInt(localStorage.getItem('dd26_best_score') || '0', 10);
+
+    // Zen Mode Data
+    let zenData = JSON.parse(localStorage.getItem('dd26_zen_data') || 'null');
+    let zenLevel = 1;
+    let zenTotalBlocksCleared = 0;
+    let zenCurrentLevelTarget = 1000;
+
+    let gameTime = GAME_DURATION;
+    let isPlaying = false;
+    let isPaused = false;
+    let isCountingDown = false;
+    let isHoldingEnd = false;
+    let canClick = false;
+
+    let lastFrameTime = performance.now();
+    let comboTimeRemaining = 0;
+    let isSkillActive = false;
+    let skillTimeRemaining = 0;
+
+    let lastActionTimestamp = performance.now();
+    let isHintShowing = false;
+    let gemUniqueId = 0;
+
+    /* DOM ELEMENTS */
+    const boardGrid = document.getElementById('board-grid');
+    const boardWrapper = document.getElementById('board-wrapper');
+    const scoreValElem = document.getElementById('score-value');
+    const bestScoreValElem = document.getElementById('best-score-val');
+    const modeChipTitle = document.getElementById('mode-chip-title');
+    const modeChipSub = document.getElementById('mode-chip-sub');
+    const comboNumElem = document.getElementById('combo-num');
+    const skillBadge = document.getElementById('skill-badge');
+    const skillTimerFill = document.getElementById('skill-timer-fill');
+    const skillTimeNum = document.getElementById('skill-time-num');
+    const timerBarFill = document.getElementById('timer-bar-fill');
+    const timerLabel = document.getElementById('timer-label');
+    
+    const countdownOverlay = document.getElementById('countdown-overlay');
+    const countdownText = document.getElementById('countdown-text');
+    const holdBanner = document.getElementById('hold-banner');
+    const zenLevelUpBanner = document.getElementById('zen-levelup-banner');
+    const zenLevelUpTitle = document.getElementById('zen-levelup-title');
+    const zenLevelUpDesc = document.getElementById('zen-levelup-desc');
+
+    // Modals
+    const homeOverlay = document.getElementById('home-overlay');
+    const modeOverlay = document.getElementById('mode-overlay');
+    const settingsOverlay = document.getElementById('settings-overlay');
+    const howtoOverlay = document.getElementById('howto-overlay');
+    const pauseOverlay = document.getElementById('pause-overlay');
+    const gameoverOverlay = document.getElementById('gameover-overlay');
+
+    // Buttons
+    const btnHome = document.getElementById('btn-home');
+    const btnPause = document.getElementById('btn-pause');
+    const btnSound = document.getElementById('btn-sound');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+
+    const btnMenuPlay = document.getElementById('btn-menu-play');
+    const btnMenuSettings = document.getElementById('btn-menu-settings');
+    const btnMenuHowto = document.getElementById('btn-menu-howto');
+
+    const cardModeClassic = document.getElementById('card-mode-classic');
+    const cardModeZen = document.getElementById('card-mode-zen');
+    const zenSaveInfo = document.getElementById('zen-save-info');
+    const zenSaveText = document.getElementById('zen-save-text');
+    const btnModeBack = document.getElementById('btn-mode-back');
+
+    const settingSoundBtn = document.getElementById('setting-sound-btn');
+    const settingOrientationSelect = document.getElementById('setting-orientation-select');
+    const btnSettingsClose = document.getElementById('btn-settings-close');
+    const btnResetZen = document.getElementById('btn-reset-zen');
+    const zenResetBox = document.getElementById('zen-reset-box');
+
+    const btnHowtoBack = document.getElementById('btn-howto-back');
+
+    const btnResume = document.getElementById('btn-resume');
+    const btnPauseRestart = document.getElementById('btn-pause-restart');
+    const btnPauseSettings = document.getElementById('btn-pause-settings');
+    const btnPauseExit = document.getElementById('btn-pause-exit');
+
+    const btnReplay = document.getElementById('btn-replay');
+    const btnResultSettings = document.getElementById('btn-result-settings');
+    const btnResultHome = document.getElementById('btn-result-home');
+
+    const pauseGameMode = document.getElementById('pause-game-mode');
+    const pauseScoreVal = document.getElementById('pause-score-val');
+
+    bestScoreValElem.textContent = bestScore.toLocaleString();
+
+    /* ============================================================
+       RESPONSIVE & DYNAMIC BOARD SIZING (DEAD CENTER)
+       ============================================================ */
+    function checkOrientation() {
+      if (orientationSetting === 'landscape') return false;
+      if (orientationSetting === 'portrait') return true;
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+      return (vw < vh) || (window.matchMedia && window.matchMedia('(orientation: portrait)').matches && vw < 850);
+    }
+
+    function updateGridDimensions() {
+      if (currentMode === 'classic') {
+        isPortrait = checkOrientation();
+        if (isPortrait) {
+          COLS = CLASSIC_PORTRAIT_COLS;
+          ROWS = CLASSIC_PORTRAIT_ROWS;
+          document.body.classList.add('portrait-mode');
+        } else {
+          COLS = CLASSIC_LANDSCAPE_COLS;
+          ROWS = CLASSIC_LANDSCAPE_ROWS;
+          document.body.classList.remove('portrait-mode');
+        }
+      } else {
+        // Zen mode grid dimensions determined by zenLevel
+        const levelConfig = getZenLevelConfig(zenLevel);
+        COLS = levelConfig.cols;
+        ROWS = levelConfig.rows;
+        document.body.classList.remove('portrait-mode');
+      }
+
+      document.documentElement.style.setProperty('--board-cols', COLS);
+      document.documentElement.style.setProperty('--board-rows', ROWS);
+
+      adjustBoardSize();
+    }
+
+    function getZenLevelConfig(lvl) {
+      if (lvl <= ZEN_LEVELS.length) {
+        return ZEN_LEVELS[lvl - 1];
+      }
+      // If beyond level 15, stay at 20x20 and add +4000 per level
+      const extraLvl = lvl - ZEN_LEVELS.length;
+      return {
+        level: lvl,
+        cols: 20,
+        rows: 20,
+        target: 36000 + extraLvl * 4000
+      };
+    }
+
+    function adjustBoardSize() {
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+
+      let cellSize = 50;
+
+      // Available space centered inside window
+      const availableHeight = vh - 130;
+      // Account for floating combo panel on desktop landscape
+      const availableWidth = isPortrait ? (vw - 24) : (vw - 190);
+
+      const sizeByHeight = Math.floor(availableHeight / ROWS);
+      const sizeByWidth = Math.floor(availableWidth / COLS);
+
+      cellSize = Math.min(sizeByHeight, sizeByWidth);
+
+      // Clamp cell size based on grid density
+      if (COLS > 16 || ROWS > 16) {
+        cellSize = Math.max(18, Math.min(cellSize, 44));
+      } else if (COLS > 12) {
+        cellSize = Math.max(22, Math.min(cellSize, 50));
+      } else {
+        cellSize = Math.max(28, Math.min(cellSize, 60));
+      }
+
+      document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
+
+      if (board.length > 0) {
+        for (let r = 0; r < ROWS; r++) {
+          if (!board[r]) continue;
+          for (let c = 0; c < COLS; c++) {
+            const item = board[r][c];
+            if (item && item.elem) {
+              updateGemPosition(item.elem, r, c);
+            }
+          }
+        }
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      updateGridDimensions();
+    });
+
+    /* ============================================================
+       BOARD INITIALIZATION & REFILL
+       ============================================================ */
+    function initBoard() {
+      clearHint();
+      board = [];
+      boardGrid.innerHTML = '';
+
+      for (let r = 0; r < ROWS; r++) {
+        board[r] = [];
+        for (let c = 0; c < COLS; c++) {
+          const socket = document.createElement('div');
+          socket.className = 'cell-socket';
+          boardGrid.appendChild(socket);
+
+          const type = Math.floor(Math.random() * GEMS.length);
+          board[r][c] = {
+            id: ++gemUniqueId,
+            type: type,
+            elem: null
+          };
+        }
+      }
+
+      renderAllGems();
+      ensureMinimumCombos(3);
+    }
+
+    function renderAllGems() {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const item = board[r][c];
+          if (item && !item.elem) {
+            createGemElement(r, c, item);
+          }
+        }
+      }
+    }
+
+    function createGemElement(r, c, item) {
+      const gem = document.createElement('div');
+      gem.className = 'gem';
+      gem.style.backgroundImage = `url('${GEMS[item.type].src}')`;
+      gem.dataset.gemId = item.id;
+      gem.dataset.row = r;
+      gem.dataset.col = c;
+
+      updateGemPosition(gem, r, c);
+
+      boardGrid.appendChild(gem);
+      item.elem = gem;
+    }
+
+    function updateGemPosition(gem, r, c) {
+      const cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size')) || 50;
+      const gap = 2;
+      const padding = 4;
+      const left = padding + c * (cellSize + gap) + 1;
+      const top = padding + r * (cellSize + gap) + 1;
+
+      gem.style.left = `${left}px`;
+      gem.style.top = `${top}px`;
+      gem.dataset.row = r;
+      gem.dataset.col = c;
+    }
+
+    /* ============================================================
+       FLOOD FILL & VALID COMBO SCANNING
+       ============================================================ */
+    function findConnectedGroup(startR, startC) {
+      const startGem = board[startR][startC];
+      if (!startGem) return [];
+
+      const targetType = startGem.type;
+      const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+      const group = [];
+      const queue = [[startR, startC]];
+
+      visited[startR][startC] = true;
+
+      while (queue.length > 0) {
+        const [r, c] = queue.shift();
+        group.push({ r, c, gem: board[r][c] });
+
+        const dirs = [
+          [-1, 0], [1, 0], [0, -1], [0, 1]
+        ];
+
+        for (const [dr, dc] of dirs) {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+            if (!visited[nr][nc] && board[nr][nc] && board[nr][nc].type === targetType) {
+              visited[nr][nc] = true;
+              queue.push([nr, nc]);
+            }
+          }
+        }
+      }
+
+      return group;
+    }
+
+    function getAllValidGroups() {
+      const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+      const groups = [];
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (!visited[r][c] && board[r][c]) {
+            const grp = findConnectedGroup(r, c);
+            grp.forEach(item => { visited[item.r][item.c] = true; });
+            if (grp.length >= 3) {
+              groups.push(grp);
+            }
+          }
+        }
+      }
+      return groups;
+    }
+
+    function ensureMinimumCombos(minRequired = 3) {
+      let validGroups = getAllValidGroups();
+      let attempts = 0;
+
+      while (validGroups.length < minRequired && attempts < 14) {
+        attempts++;
+        let converted = false;
+
+        for (let r = 0; r < ROWS && !converted; r++) {
+          for (let c = 0; c < COLS && !converted; c++) {
+            const cur = board[r][c];
+            if (!cur) continue;
+
+            if (c + 1 < COLS && board[r][c+1] && board[r][c+1].type === cur.type) {
+              const candidates = [
+                [r, c - 1], [r, c + 2],
+                [r - 1, c], [r + 1, c],
+                [r - 1, c + 1], [r + 1, c + 1]
+              ];
+              for (const [nr, nc] of candidates) {
+                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc] && board[nr][nc].type !== cur.type) {
+                  changeGemType(nr, nc, cur.type);
+                  converted = true;
+                  break;
+                }
+              }
+            } else if (r + 1 < ROWS && board[r+1][c] && board[r+1][c].type === cur.type) {
+              const candidates = [
+                [r - 1, c], [r + 2, c],
+                [r, c - 1], [r, c + 1],
+                [r + 1, c - 1], [r + 1, c + 1]
+              ];
+              for (const [nr, nc] of candidates) {
+                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc] && board[nr][nc].type !== cur.type) {
+                  changeGemType(nr, nc, cur.type);
+                  converted = true;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        if (!converted) {
+          const randR = Math.floor(Math.random() * (ROWS - 2)) + 1;
+          const randC = Math.floor(Math.random() * (COLS - 2)) + 1;
+          const targetType = board[randR][randC].type;
+          changeGemType(randR, randC - 1, targetType);
+          changeGemType(randR, randC + 1, targetType);
+        }
+
+        validGroups = getAllValidGroups();
+      }
+    }
+
+    function changeGemType(r, c, newType) {
+      if (board[r] && board[r][c]) {
+        board[r][c].type = newType;
+        if (board[r][c].elem) {
+          board[r][c].elem.style.backgroundImage = `url('${GEMS[newType].src}')`;
+        }
+      }
+    }
+
+    /* ============================================================
+       HINT SYSTEM
+       ============================================================ */
+    function showHint() {
+      if (isHintShowing || !isPlaying || isPaused || isCountingDown || isHoldingEnd) return;
+
+      const validGroups = getAllValidGroups();
+      if (validGroups.length === 0) return;
+
+      const hintGroup = validGroups[0];
+      isHintShowing = true;
+
+      hintGroup.forEach(item => {
+        if (item.gem && item.gem.elem) {
+          item.gem.elem.classList.add('hint-active');
+          spawnGotSparkle(item.r, item.c);
+        }
+      });
+    }
+
+    function clearHint() {
+      if (!isHintShowing) return;
+      isHintShowing = false;
+
+      const activeHints = boardGrid.querySelectorAll('.gem.hint-active');
+      activeHints.forEach(gem => gem.classList.remove('hint-active'));
+    }
+
+    /* ============================================================
+       TAP / CLICK HANDLER
+       ============================================================ */
+    function handleGemTap(e) {
+      if (!isPlaying || isPaused || isCountingDown || isHoldingEnd || !canClick) return;
+
+      const gemElem = e.target.closest('.gem');
+      if (!gemElem) return;
+
+      const r = parseInt(gemElem.dataset.row, 10);
+      const c = parseInt(gemElem.dataset.col, 10);
+
+      if (isNaN(r) || isNaN(c) || !board[r] || !board[r][c]) return;
+
+      clearHint();
+      lastActionTimestamp = performance.now();
+
+      const group = findConnectedGroup(r, c);
+
+      if (group.length < 3) {
+        gemElem.classList.remove('invalid-shake');
+        void gemElem.offsetWidth;
+        gemElem.classList.add('invalid-shake');
+        sound.playInvalid();
+        return;
+      }
+
+      processMatch(r, c, group);
+    }
+
+    boardGrid.addEventListener('pointerdown', handleGemTap);
+
+    /* ============================================================
+       PROCESS MATCH & SKILL BLAST
+       ============================================================ */
+    function processMatch(clickR, clickC, group) {
+      const matchSize = group.length;
+
+      combo++;
+      if (combo > maxCombo) maxCombo = combo;
+      comboTimeRemaining = COMBO_TIMEOUT;
+      updateComboUI(true);
+
+      if (!isSkillActive) {
+        skillComboCounter++;
+        if (skillComboCounter >= SKILL_COMBO_TRIGGER) {
+          activateSpecialSkill();
+          skillComboCounter = 0;
+        }
+      } else {
+        extendSpecialSkill(SKILL_EXTEND_TIME);
+      }
+
+      let gemsToClear = new Set(group.map(item => `${item.r},${item.c}`));
+
+      if (isSkillActive) {
+        sound.playBombBlast();
+
+        let radius = 1.4;
+        if (matchSize >= 6) {
+          radius = 3.0;
+        } else if (matchSize >= 4) {
+          radius = 2.1;
+        }
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const dist = Math.hypot(r - clickR, c - clickC);
+            if (dist <= radius && board[r] && board[r][c]) {
+              gemsToClear.add(`${r},${c}`);
+            }
+          }
+        }
+
+        spawnBombShockwave(clickR, clickC, radius);
+        boardWrapper.classList.add('shake');
+        setTimeout(() => boardWrapper.classList.remove('shake'), 350);
+      } else {
+        sound.playPop(combo);
+      }
+
+      let multiplier = 1;
+      if (combo >= 12) multiplier = 5;
+      else if (combo >= 10) multiplier = 3;
+      else if (combo >= 5) multiplier = 2;
+
+      const basePerGem = 100 + (matchSize - 3) * 50;
+      const totalPoints = gemsToClear.size * basePerGem * multiplier;
+      score += totalPoints;
+      totalGemsCleared += gemsToClear.size;
+
+      // Zen Mode Quest Tracking
+      if (currentMode === 'zen') {
+        zenTotalBlocksCleared += gemsToClear.size;
+        checkZenLevelUp();
+        saveZenProgress();
+      }
+
+      updateScoreUI(totalPoints, clickR, clickC);
+
+      gemsToClear.forEach(pos => {
+        const [r, c] = pos.split(',').map(Number);
+        const gemData = board[r][c];
+        if (gemData && gemData.elem) {
+          spawnGotSparkle(r, c);
+          gemData.elem.classList.add('popping');
+          setTimeout(() => {
+            if (gemData.elem && gemData.elem.parentNode) {
+              gemData.elem.parentNode.removeChild(gemData.elem);
+            }
+          }, 180);
+          board[r][c] = null;
+        }
+      });
+
+      setTimeout(() => {
+        applyGravityAndRefill();
+      }, 190);
+    }
+
+    /* ============================================================
+       GRAVITY & REFILL
+       ============================================================ */
+    function applyGravityAndRefill() {
+      const cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size')) || 50;
+      const gap = 2;
+      const padding = 4;
+
+      for (let c = 0; c < COLS; c++) {
+        let writeRow = ROWS - 1;
+        for (let r = ROWS - 1; r >= 0; r--) {
+          if (board[r][c] !== null) {
+            if (writeRow !== r) {
+              board[writeRow][c] = board[r][c];
+              board[r][c] = null;
+
+              const gem = board[writeRow][c].elem;
+              if (gem) {
+                gem.classList.add('falling');
+                updateGemPosition(gem, writeRow, c);
+                setTimeout(() => gem.classList.remove('falling'), 230);
+              }
+            }
+            writeRow--;
+          }
+        }
+
+        let emptyCount = writeRow + 1;
+        for (let r = writeRow; r >= 0; r--) {
+          const type = Math.floor(Math.random() * GEMS.length);
+          const newItem = {
+            id: ++gemUniqueId,
+            type: type,
+            elem: null
+          };
+          board[r][c] = newItem;
+
+          const gem = document.createElement('div');
+          gem.className = 'gem falling';
+          gem.style.backgroundImage = `url('${GEMS[type].src}')`;
+          gem.dataset.gemId = newItem.id;
+
+          const left = padding + c * (cellSize + gap) + 1;
+          const targetTop = padding + r * (cellSize + gap) + 1;
+          const spawnTop = padding - (emptyCount - r) * (cellSize + gap);
+
+          gem.style.left = `${left}px`;
+          gem.style.top = `${spawnTop}px`;
+          boardGrid.appendChild(gem);
+          newItem.elem = gem;
+
+          void gem.offsetHeight; // Force reflow
+
+          gem.style.top = `${targetTop}px`;
+          gem.dataset.row = r;
+          gem.dataset.col = c;
+          setTimeout(() => gem.classList.remove('falling'), 240);
+        }
+      }
+
+      setTimeout(() => {
+        ensureMinimumCombos(3);
+      }, 250);
+    }
+
+    /* ============================================================
+       VISUAL EFFECTS
+       ============================================================ */
+    function getCellCenter(r, c) {
+      const cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size')) || 50;
+      const gap = 2;
+      const padding = 4;
+      return {
+        x: padding + c * (cellSize + gap) + cellSize / 2,
+        y: padding + r * (cellSize + gap) + cellSize / 2
+      };
+    }
+
+    function spawnGotSparkle(r, c) {
+      const center = getCellCenter(r, c);
+      const sparkle = document.createElement('div');
+      sparkle.className = 'got-sparkle';
+      sparkle.style.left = `${center.x}px`;
+      sparkle.style.top = `${center.y}px`;
+      boardGrid.appendChild(sparkle);
+
+      setTimeout(() => {
+        if (sparkle.parentNode) sparkle.parentNode.removeChild(sparkle);
+      }, 280);
+    }
+
+    function spawnBombShockwave(clickR, clickC, radius) {
+      const center = getCellCenter(clickR, clickC);
+      const cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size')) || 50;
+      const blastPixelSize = (radius * 2 + 1) * cellSize;
+
+      const wave = document.createElement('div');
+      wave.className = 'bomb-shockwave';
+      wave.style.setProperty('--blast-size', `${blastPixelSize}px`);
+      wave.style.left = `${center.x}px`;
+      wave.style.top = `${center.y}px`;
+      boardGrid.appendChild(wave);
+
+      setTimeout(() => {
+        if (wave.parentNode) wave.parentNode.removeChild(wave);
+      }, 360);
+    }
+
+    function updateScoreUI(points, r, c) {
+      scoreValElem.textContent = score.toLocaleString();
+      scoreValElem.classList.remove('score-pulse');
+      void scoreValElem.offsetWidth;
+      scoreValElem.classList.add('score-pulse');
+
+      const center = getCellCenter(r, c);
+      const floatElem = document.createElement('div');
+      floatElem.className = 'floating-score';
+      floatElem.textContent = `+${points.toLocaleString()}`;
+      floatElem.style.left = `${center.x}px`;
+      floatElem.style.top = `${center.y}px`;
+      boardGrid.appendChild(floatElem);
+
+      setTimeout(() => {
+        if (floatElem.parentNode) floatElem.parentNode.removeChild(floatElem);
+      }, 700);
+
+      if (currentMode === 'zen') {
+        updateZenQuestUI();
+      }
+    }
+
+    /* ============================================================
+       SPECIAL SKILL SYSTEM
+       ============================================================ */
+    function activateSpecialSkill() {
+      isSkillActive = true;
+      skillTimeRemaining = SKILL_BASE_TIME;
+      boardWrapper.classList.add('skill-active');
+      skillBadge.classList.add('active');
+      sound.playSkillFanfare();
+    }
+
+    function extendSpecialSkill(extraSec) {
+      skillTimeRemaining = Math.min(skillTimeRemaining + extraSec, 10.0);
+    }
+
+    function deactivateSpecialSkill() {
+      isSkillActive = false;
+      skillTimeRemaining = 0;
+      boardWrapper.classList.remove('skill-active');
+      skillBadge.classList.remove('active');
+    }
+
+    /* ============================================================
+       COMBO SYSTEM: DYNAMICALLY SCALING FLOATING TEXT
+       ============================================================ */
+    function updateComboUI(isBounce) {
+      comboNumElem.textContent = combo;
+
+      // Font size scales with combo: starts at 3.6rem up to 6.8rem!
+      const extraSize = Math.min(combo, 40) * 0.08;
+      const calculatedFontSize = (3.6 + extraSize).toFixed(2);
+      comboNumElem.style.fontSize = `${calculatedFontSize}rem`;
+
+      if (isBounce) {
+        comboNumElem.classList.remove('combo-bounce');
+        void comboNumElem.offsetWidth;
+        comboNumElem.classList.add('combo-bounce');
+      }
+    }
+
+    function resetCombo() {
+      if (combo > 0) {
+        sound.playLostCombo();
+      }
+      combo = 0;
+      skillComboCounter = 0;
+      comboTimeRemaining = 0;
+      updateComboUI(false);
+    }
+
+    /* ============================================================
+       ZEN MODE LOGIC: PROGRESSION, LEVEL UP, SAVE/LOAD
+       ============================================================ */
+    function saveZenProgress() {
+      const data = {
+        level: zenLevel,
+        blocksCleared: zenTotalBlocksCleared,
+        score: score
+      };
+      localStorage.setItem('dd26_zen_data', JSON.stringify(data));
+      zenData = data;
+    }
+
+    function checkZenLevelUp() {
+      const currentConfig = getZenLevelConfig(zenLevel);
+      if (zenTotalBlocksCleared >= currentConfig.target) {
+        zenLevel++;
+        sound.playLevelUp();
+
+        const nextConfig = getZenLevelConfig(zenLevel);
+        zenCurrentLevelTarget = nextConfig.target;
+
+        // Show celebratory Level Up banner
+        zenLevelUpTitle.textContent = `🎉 LEVEL UP: ${zenLevel}!`;
+        zenLevelUpDesc.textContent = `ขยายกระดานเป็น ${nextConfig.cols}x${nextConfig.rows} ช่อง! (เป้าหมายถัดไป: ${nextConfig.target.toLocaleString()} บล็อค)`;
+        zenLevelUpBanner.style.display = 'block';
+
+        setTimeout(() => {
+          zenLevelUpBanner.style.display = 'none';
+        }, 2200);
+
+        // Update grid to new dimensions
+        updateGridDimensions();
+        initBoard();
+        updateZenQuestUI();
+      }
+    }
+
+    function updateZenQuestUI() {
+      const currentConfig = getZenLevelConfig(zenLevel);
+      const prevTarget = zenLevel > 1 ? getZenLevelConfig(zenLevel - 1).target : 0;
+      const progressInLevel = Math.max(0, zenTotalBlocksCleared - prevTarget);
+      const totalNeededInLevel = currentConfig.target - prevTarget;
+      const pct = Math.min(100, Math.max(0, (progressInLevel / totalNeededInLevel) * 100));
+
+      timerBarFill.style.width = `${pct}%`;
+      timerBarFill.classList.remove('warning');
+      timerLabel.textContent = `เควสเวล ${zenLevel}: ${zenTotalBlocksCleared.toLocaleString()} / ${currentConfig.target.toLocaleString()} บล็อค (${Math.floor(pct)}%)`;
+
+      modeChipTitle.textContent = `ZEN LV.${zenLevel}`;
+      modeChipSub.textContent = `${COLS}x${ROWS}`;
+    }
+
+    /* ============================================================
+       3-SECOND COUNTDOWN
+       ============================================================ */
+    function startPreparationCountdown(isStartingFresh = false, onComplete = null) {
+      isCountingDown = true;
+      canClick = false;
+      countdownOverlay.classList.add('active');
+
+      let count = 3;
+      countdownText.textContent = count;
+      sound.playBeep(false);
+
+      const interval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          countdownText.textContent = count;
+          countdownText.style.animation = 'none';
+          void countdownText.offsetWidth;
+          countdownText.style.animation = 'countPulse 0.9s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards';
+          sound.playBeep(false);
+        } else if (count === 0) {
+          countdownText.textContent = 'GO!';
+          countdownText.style.animation = 'none';
+          void countdownText.offsetWidth;
+          countdownText.style.animation = 'countPulse 0.9s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards';
+          sound.playBeep(true);
+        } else {
+          clearInterval(interval);
+          countdownOverlay.classList.remove('active');
+          isCountingDown = false;
+          canClick = true;
+          lastActionTimestamp = performance.now();
+          lastFrameTime = performance.now();
+
+          isPlaying = true;
+          isPaused = false;
+          requestAnimationFrame(gameLoop);
+
+          if (onComplete) onComplete();
+        }
+      }, 1000);
+    }
+
+    /* ============================================================
+       GAME LOOP
+       ============================================================ */
+    function gameLoop(now) {
+      if (!isPlaying || isPaused || isCountingDown || isHoldingEnd) return;
+
+      const dt = (now - lastFrameTime) / 1000;
+      lastFrameTime = now;
+
+      // 1. Timer logic (Classic only)
+      if (currentMode === 'classic') {
+        const prevTime = gameTime;
+        gameTime -= dt;
+
+        if (prevTime > 10 && gameTime <= 10) {
+          sound.play10SecWarning();
+        }
+
+        if (gameTime <= 0) {
+          gameTime = 0;
+          triggerGameEndHold();
+          return;
+        }
+
+        const timerPct = Math.max(0, (gameTime / GAME_DURATION) * 100);
+        timerBarFill.style.width = `${timerPct}%`;
+        timerLabel.textContent = `⏱ ${Math.ceil(gameTime)}s`;
+
+        if (gameTime <= 10) {
+          timerBarFill.classList.add('warning');
+        } else {
+          timerBarFill.classList.remove('warning');
+        }
+      }
+
+      // 2. Combo Timer Decay
+      if (combo > 0) {
+        comboTimeRemaining -= dt;
+        if (comboTimeRemaining <= 0) {
+          resetCombo();
+        }
+      }
+
+      // 3. Special Skill Timer
+      if (isSkillActive) {
+        skillTimeRemaining -= dt;
+        if (skillTimeRemaining <= 0) {
+          deactivateSpecialSkill();
+        } else {
+          const skillPct = Math.max(0, (skillTimeRemaining / SKILL_BASE_TIME) * 100);
+          skillTimerFill.style.width = `${Math.min(skillPct, 100)}%`;
+          skillTimeNum.textContent = `${skillTimeRemaining.toFixed(1)}s`;
+        }
+      }
+
+      // 4. Hint Timer Check (2.2s idle)
+      const idleTime = (now - lastActionTimestamp) / 1000;
+      if (idleTime >= HINT_IDLE_SECONDS && !isHintShowing) {
+        showHint();
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    /* ============================================================
+       END GAME (Classic Mode)
+       ============================================================ */
+    function triggerGameEndHold() {
+      isPlaying = false;
+      canClick = false;
+      isHoldingEnd = true;
+      clearHint();
+
+      holdBanner.style.display = 'block';
+
+      setTimeout(() => {
+        holdBanner.style.display = 'none';
+        isHoldingEnd = false;
+        showFinalResults();
+      }, HOLD_AFTER_FINISH_MS);
+    }
+
+    function showFinalResults() {
+      sound.playResult();
+
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('dd26_best_score', bestScore.toString());
+        bestScoreValElem.textContent = bestScore.toLocaleString();
+      }
+
+      document.getElementById('final-score').textContent = score.toLocaleString();
+      document.getElementById('final-max-combo').textContent = maxCombo;
+      document.getElementById('final-gems-cleared').textContent = totalGemsCleared.toLocaleString();
+      document.getElementById('final-best-score').textContent = bestScore.toLocaleString();
+
+      gameoverOverlay.classList.add('active');
+    }
+
+    /* ============================================================
+       MODAL NAVIGATION & STATE HANDLERS
+       ============================================================ */
+    function closeAllModals() {
+      homeOverlay.classList.remove('active');
+      modeOverlay.classList.remove('active');
+      settingsOverlay.classList.remove('active');
+      howtoOverlay.classList.remove('active');
+      pauseOverlay.classList.remove('active');
+      gameoverOverlay.classList.remove('active');
+      holdBanner.style.display = 'none';
+      zenLevelUpBanner.style.display = 'none';
+      isHoldingEnd = false;
+    }
+
+    function openHome() {
+      isPlaying = false;
+      isPaused = false;
+      closeAllModals();
+      homeOverlay.classList.add('active');
+    }
+
+    function openModeSelect() {
+      closeAllModals();
+      // Check saved Zen data
+      zenData = JSON.parse(localStorage.getItem('dd26_zen_data') || 'null');
+      if (zenData) {
+        zenSaveInfo.style.display = 'block';
+        zenSaveText.textContent = `เลเวล ${zenData.level} (บล็อคสะสม: ${zenData.blocksCleared.toLocaleString()})`;
+      } else {
+        zenSaveInfo.style.display = 'none';
+      }
+      modeOverlay.classList.add('active');
+    }
+
+    function openSettings(fromPause = false) {
+      if (fromPause) {
+        pauseOverlay.classList.remove('active');
+      }
+      zenResetBox.style.display = (zenData || currentMode === 'zen') ? 'flex' : 'none';
+      settingsOverlay.classList.add('active');
+    }
+
+    function openHowTo() {
+      closeAllModals();
+      howtoOverlay.classList.add('active');
+    }
+
+    function pauseGame() {
+      if (!isPlaying || isPaused || isCountingDown || isHoldingEnd) return;
+
+      isPaused = true;
+      clearHint();
+
+      pauseGameMode.textContent = currentMode === 'classic' ? 'CLASSIC (60s)' : `ZEN (LV.${zenLevel})`;
+      pauseScoreVal.textContent = score.toLocaleString();
+      pauseOverlay.classList.add('active');
+    }
+
+    function resumeGame() {
+      if (!isPaused) return;
+      pauseOverlay.classList.remove('active');
+      startPreparationCountdown(false);
+    }
+
+    function restartCurrentGame() {
+      closeAllModals();
+      if (currentMode === 'classic') {
+        startClassicMode();
+      } else {
+        startZenMode(false);
+      }
+    }
+
+    /* ============================================================
+       MODE LAUNCHERS
+       ============================================================ */
+    function startClassicMode() {
+      sound.init();
+      currentMode = 'classic';
+      closeAllModals();
+
+      score = 0;
+      combo = 0;
+      skillComboCounter = 0;
+      maxCombo = 0;
+      totalGemsCleared = 0;
+      gameTime = GAME_DURATION;
+      comboTimeRemaining = 0;
+      isSkillActive = false;
+      skillTimeRemaining = 0;
+      sound.played10Sec = false;
+
+      scoreValElem.textContent = '0';
+      modeChipTitle.textContent = 'CLASSIC';
+      modeChipSub.innerHTML = `BEST: <b id="best-score-val">${bestScore.toLocaleString()}</b>`;
+
+      updateComboUI(false);
+      deactivateSpecialSkill();
+
+      updateGridDimensions();
+      initBoard();
+      startPreparationCountdown(true);
+    }
+
+    function startZenMode(continueSave = true) {
+      sound.init();
+      currentMode = 'zen';
+      closeAllModals();
+
+      if (continueSave && zenData) {
+        zenLevel = zenData.level || 1;
+        zenTotalBlocksCleared = zenData.blocksCleared || 0;
+        score = zenData.score || 0;
+      } else {
+        zenLevel = 1;
+        zenTotalBlocksCleared = 0;
+        score = 0;
+      }
+
+      combo = 0;
+      skillComboCounter = 0;
+      maxCombo = 0;
+      totalGemsCleared = zenTotalBlocksCleared;
+      comboTimeRemaining = 0;
+      isSkillActive = false;
+      skillTimeRemaining = 0;
+
+      scoreValElem.textContent = score.toLocaleString();
+      deactivateSpecialSkill();
+      updateComboUI(false);
+
+      updateGridDimensions();
+      initBoard();
+      updateZenQuestUI();
+      startPreparationCountdown(true);
+    }
+
+    /* ============================================================
+       EVENT BINDINGS
+       ============================================================ */
+    // Top Bar Buttons
+    btnHome.addEventListener('click', openHome);
+    btnPause.addEventListener('click', pauseGame);
+
+    btnSound.addEventListener('click', () => {
+      sound.enabled = !sound.enabled;
+      btnSound.textContent = sound.enabled ? '🔊' : '🔇';
+      settingSoundBtn.textContent = sound.enabled ? 'เปิด (ON)' : 'ปิด (OFF)';
+    });
+
+    btnFullscreen.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    // Home Menu Buttons
+    btnMenuPlay.addEventListener('click', openModeSelect);
+    btnMenuSettings.addEventListener('click', () => openSettings(false));
+    btnMenuHowto.addEventListener('click', openHowTo);
+
+    // Mode Select Buttons
+    cardModeClassic.addEventListener('click', startClassicMode);
+    cardModeZen.addEventListener('click', () => {
+      // If save exists, start continuing
+      startZenMode(true);
+    });
+    btnModeBack.addEventListener('click', openHome);
+
+    // Settings Modal
+    settingSoundBtn.addEventListener('click', () => {
+      sound.enabled = !sound.enabled;
+      settingSoundBtn.textContent = sound.enabled ? 'เปิด (ON)' : 'ปิด (OFF)';
+      btnSound.textContent = sound.enabled ? '🔊' : '🔇';
+    });
+
+    settingOrientationSelect.value = orientationSetting;
+    settingOrientationSelect.addEventListener('change', (e) => {
+      orientationSetting = e.target.value;
+      updateGridDimensions();
+      if (isPlaying) {
+        initBoard();
+      }
+    });
+
+    btnResetZen.addEventListener('click', () => {
+      if (confirm('ต้องการล้างความคืบหน้าโหมดเซนทั้งหมดหรือไม่?')) {
+        localStorage.removeItem('dd26_zen_data');
+        zenData = null;
+        zenLevel = 1;
+        zenTotalBlocksCleared = 0;
+        zenResetBox.style.display = 'none';
+        alert('ล้างเซฟโหมดเซนเรียบร้อยแล้ว!');
+      }
+    });
+
+    btnSettingsClose.addEventListener('click', () => {
+      settingsOverlay.classList.remove('active');
+      if (isPaused) {
+        pauseOverlay.classList.add('active');
+      }
+    });
+
+    // How to Play Modal
+    btnHowtoBack.addEventListener('click', openHome);
+
+    // Pause Modal
+    btnResume.addEventListener('click', resumeGame);
+    btnPauseRestart.addEventListener('click', restartCurrentGame);
+    btnPauseSettings.addEventListener('click', () => openSettings(true));
+    btnPauseExit.addEventListener('click', openHome);
+
+    // Game Over Modal (Classic Result)
+    btnReplay.addEventListener('click', startClassicMode);
+    btnResultSettings.addEventListener('click', () => openSettings(false));
+    btnResultHome.addEventListener('click', openHome);
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyP' || e.code === 'Space') {
+        if (isPlaying && !isPaused && !isCountingDown) {
+          pauseGame();
+        } else if (isPaused) {
+          resumeGame();
+        }
+      }
+    });
+
+    /* ============================================================
+       AMBIENT SPARKLES BACKGROUND
+       ============================================================ */
+    const bgCanvas = document.getElementById('bg-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let sparkles = [];
+
+    function resizeBgCanvas() {
+      bgCanvas.width = window.innerWidth;
+      bgCanvas.height = window.innerHeight;
+      sparkles = Array.from({ length: 45 }, () => ({
+        x: Math.random() * bgCanvas.width,
+        y: Math.random() * bgCanvas.height,
+        r: Math.random() * 2.5 + 1,
+        speedY: -(Math.random() * 0.4 + 0.15),
+        speedX: (Math.random() - 0.5) * 0.3,
+        alpha: Math.random(),
+        fadeSpeed: (Math.random() * 0.015 + 0.005)
+      }));
+    }
+
+    function drawBgSparkles() {
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      for (const p of sparkles) {
+        p.y += p.speedY;
+        p.x += p.speedX;
+        p.alpha += p.fadeSpeed;
+        if (p.alpha > 1 || p.alpha < 0) p.fadeSpeed = -p.fadeSpeed;
+        if (p.y < 0) {
+          p.y = bgCanvas.height;
+          p.x = Math.random() * bgCanvas.width;
+        }
+
+        bgCtx.fillStyle = `rgba(255, 235, 120, ${Math.max(0, Math.min(p.alpha, 0.8))})`;
+        bgCtx.beginPath();
+        bgCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        bgCtx.fill();
+      }
+      requestAnimationFrame(drawBgSparkles);
+    }
+
+    window.addEventListener('resize', resizeBgCanvas);
+    resizeBgCanvas();
+    drawBgSparkles();
+
+    // Start on Home Menu
+    openHome();
+
+  })();
+  </script>
+</body>
+</html>
